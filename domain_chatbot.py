@@ -5,7 +5,7 @@ from openai import AzureOpenAI
 # Initial message content as a JSON object
 initial_content = {
     "isNextState": False,
-    "resp": "I amd a chatbot to provide personalized weight loss advice. Nice to meet you! 😊",
+    "resp": "I am a chatbot to provide personalized weight loss advice. Nice to meet you! 😊",
     "data": ""
 }
 
@@ -137,7 +137,7 @@ with st.sidebar:
     openai_api_key = st.text_input("Azure OpenAI API Key", key="chatbot_api_key", type="password")
     "[Get an Azure OpenAI API key](https://itsc.hkust.edu.hk/services/it-infrastructure/azure-openai-api-service)"
 
-model_name = "gpt-35-turbo"
+model_name = "gpt-4o-mini"
 
 st.title("💬 Healthcare Chatbot")
 
@@ -160,7 +160,7 @@ if user_resp := st.chat_input():
     # setting up the OpenAI model
     client = AzureOpenAI(
         api_key=openai_api_key,
-        api_version="2023-12-01-preview",
+        api_version="2025-02-01-preview",
         azure_endpoint="https://hkust.azure-api.net/",
     )
     model_resp = get_response_from_model(client)
