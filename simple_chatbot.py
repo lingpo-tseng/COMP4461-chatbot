@@ -1,7 +1,6 @@
 import json
-import random
-import requests
 import streamlit as st
+from openai import APIConnectionError, APIStatusError
 from openai import AzureOpenAI
 
 with st.sidebar:
@@ -36,10 +35,29 @@ if prompt := st.chat_input():
         api_version="2025-02-01-preview",
         azure_endpoint="https://hkust.azure-api.net/",
     )
-    response = client.chat.completions.create(
-        model=model_name,
-        messages=st.session_state.messages
-    )
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=st.session_state.messages
+        )
+    except APIConnectionError as err:
+        error_msg = "I couldn't reach Azure OpenAI. Please check your connection and try again."
+        st.error(str(err))
+        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        st.chat_message("assistant").write(error_msg)
+        st.stop()
+    except APIStatusError as err:
+        error_msg = "Azure OpenAI returned an error. Please verify your credentials and try again."
+        st.error(str(err))
+        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        st.chat_message("assistant").write(error_msg)
+        st.stop()
+    except Exception as err:  # noqa: BLE001
+        error_msg = "Something went wrong while contacting Azure OpenAI. Please try again later."
+        st.error(str(err))
+        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        st.chat_message("assistant").write(error_msg)
+        st.stop()
 
     msg = response.choices[0].message.content
     st.session_state.messages.append({"role": "assistant", "content": msg})
