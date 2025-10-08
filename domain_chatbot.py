@@ -1,5 +1,6 @@
-import streamlit as st
 import json
+import streamlit as st
+from openai import APIConnectionError, APIStatusError
 from openai import AzureOpenAI
 
 # Initial message content as a JSON object
@@ -163,7 +164,41 @@ if user_resp := st.chat_input():
         api_version="2025-02-01-preview",
         azure_endpoint="https://hkust.azure-api.net/",
     )
-    model_resp = get_response_from_model(client)
+    try:
+        model_resp = get_response_from_model(client)
+    except APIConnectionError as err:
+        error_payload = {
+            'isNextState': False,
+            'resp': "I couldn't reach Azure OpenAI. Please check your connection and try again.",
+            'data': ''
+        }
+        error_payload['prompt'] = json.dumps(error_payload)
+        st.error(str(err))
+        st.session_state.messages.append({"role": "assistant", "content": error_payload})
+        st.chat_message("assistant").write(error_payload['resp'])
+        st.stop()
+    except APIStatusError as err:
+        error_payload = {
+            'isNextState': False,
+            'resp': "Azure OpenAI returned an error. Please verify your credentials and try again.",
+            'data': ''
+        }
+        error_payload['prompt'] = json.dumps(error_payload)
+        st.error(str(err))
+        st.session_state.messages.append({"role": "assistant", "content": error_payload})
+        st.chat_message("assistant").write(error_payload['resp'])
+        st.stop()
+    except Exception as err:  # noqa: BLE001
+        error_payload = {
+            'isNextState': False,
+            'resp': "Something went wrong while contacting Azure OpenAI. Please try again later.",
+            'data': ''
+        }
+        error_payload['prompt'] = json.dumps(error_payload)
+        st.error(str(err))
+        st.session_state.messages.append({"role": "assistant", "content": error_payload})
+        st.chat_message("assistant").write(error_payload['resp'])
+        st.stop()
 
     # state transition
     if model_resp['isNextState']:
